@@ -1,0 +1,112 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "WorldDatablock",
+"class": "ActorInfo",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Actors/actor_info.gd"
+}, {
+"base": "Resource",
+"class": "Attribute",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Attributes/attribute.gd"
+}, {
+"base": "Resource",
+"class": "AttributeInjector",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/AttributeInjectors/attribute_injector.gd"
+}, {
+"base": "Node",
+"class": "AttributeSet",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Attributes/attribute_set.gd"
+}, {
+"base": "Reference",
+"class": "AttributeSpec",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Attributes/attribute_spec.gd"
+}, {
+"base": "Node",
+"class": "Blueprint",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Blueprint/blueprint.gd"
+}, {
+"base": "Resource",
+"class": "Condition",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Conditions/condition.gd"
+}, {
+"base": "Resource",
+"class": "ConditionFunction",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Conditions/condition_function.gd"
+}, {
+"base": "Resource",
+"class": "GameplayEffect",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/GameplayEffects/gameplay_effect.gd"
+}, {
+"base": "Resource",
+"class": "GameplayEffectModifier",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/GameplayEffects/gameplay_effect_modifier.gd"
+}, {
+"base": "Reference",
+"class": "GameplayEffectModifierSpec",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/GameplayEffects/gameplay_effect_modifier_spec.gd"
+}, {
+"base": "Node",
+"class": "GameplayEffectSpec",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/GameplayEffects/gameplay_effect_spec.gd"
+}, {
+"base": "Resource",
+"class": "MagnitudeCalculation",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/MagnitudeCalculationTypes/magnitude_calculation.gd"
+}, {
+"base": "Reference",
+"class": "TagContainer",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Tags/tag_container.gd"
+}, {
+"base": "Node",
+"class": "WorldDatablock",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Blueprint/world_datablock.gd"
+} ]
+_global_script_class_icons={
+"ActorInfo": "",
+"Attribute": "",
+"AttributeInjector": "",
+"AttributeSet": "",
+"AttributeSpec": "",
+"Blueprint": "",
+"Condition": "",
+"ConditionFunction": "",
+"GameplayEffect": "",
+"GameplayEffectModifier": "",
+"GameplayEffectModifierSpec": "",
+"GameplayEffectSpec": "",
+"MagnitudeCalculation": "",
+"TagContainer": "",
+"WorldDatablock": ""
+}
+
+[application]
+
+config/name="GameplayAttributes"
+config/icon="res://icon.png"
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
