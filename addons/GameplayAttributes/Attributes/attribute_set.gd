@@ -22,7 +22,6 @@ var tagContainer:TagContainer
 var attributes = {}
 
 func _connect_to_blueprint(new_blueprint):
-	._connect_to_blueprint(new_blueprint)
 	tagContainer = new_blueprint.tagContainer
 
 func _init():

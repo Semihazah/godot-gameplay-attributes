@@ -1,5 +1,5 @@
 class_name ActorInfo
-extends WorldDatablock
+extends ShellDatablock
 # Used to represent a person or other actor in the world.
 # Will eventually hold character logic and dialogue
 
@@ -14,7 +14,6 @@ export(String) var actor_description setget _set_actor_description
 export(Array, Resource) var actor_factions
 
 func _connect_to_blueprint(new_blueprint):
-	._connect_to_blueprint(new_blueprint)
 	new_blueprint.name_func = funcref(self, "_get_actor_name")
 	new_blueprint.icon_func = funcref(self, "_get_actor_icon")
 	new_blueprint.faction_func = funcref(self, "_get_faction_list")
@@ -38,10 +37,6 @@ func _get_faction_list():
 	return actor_factions
 
 
-func _get_shell():
-	return shell
-
-
 func _set_actor_name(new_name):
 	emit_signal("actor_name_changed", actor_name, new_name)
 	actor_name = new_name
@@ -60,7 +55,7 @@ func _set_actor_description(new_description):
 func _spawn_shell() -> Node:
 	if shell and shell.has_method("_disconnect_from_datablock"):
 		shell._disconnect_from_datablock()
-	shell = shell_model.instance()
+	shell = shell_scene.instance()
 	if shell.has_method("_connect_to_datablock"):
 		shell._connect_to_datablock(self)
 	return shell

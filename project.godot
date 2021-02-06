@@ -9,7 +9,7 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "WorldDatablock",
+"base": "ShellDatablock",
 "class": "ActorInfo",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Actors/actor_info.gd"
@@ -74,15 +74,15 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/MagnitudeCalculationTypes/magnitude_calculation.gd"
 }, {
+"base": "Node",
+"class": "ShellDatablock",
+"language": "GDScript",
+"path": "res://addons/GameplayAttributes/Blueprint/shell_datablock.gd"
+}, {
 "base": "Reference",
 "class": "TagContainer",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Tags/tag_container.gd"
-}, {
-"base": "Node",
-"class": "WorldDatablock",
-"language": "GDScript",
-"path": "res://addons/GameplayAttributes/Blueprint/world_datablock.gd"
 } ]
 _global_script_class_icons={
 "ActorInfo": "",
@@ -98,8 +98,8 @@ _global_script_class_icons={
 "GameplayEffectModifierSpec": "",
 "GameplayEffectSpec": "",
 "MagnitudeCalculation": "",
-"TagContainer": "",
-"WorldDatablock": ""
+"ShellDatablock": "",
+"TagContainer": ""
 }
 
 [application]

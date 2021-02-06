@@ -53,18 +53,8 @@ func get_shell():
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	for child in get_children():
-		if child.has_method("_connect_to_blueprint"):
-			child._connect_to_blueprint(self)
-
-
-func play_turn():
-	if active_datablocks.has("CombatController"):
-		var controller = active_datablocks["CombatController"]
-		var result = controller.select_command()
-		if result is GDScriptFunctionState:
-			result = yield(result, "completed")
-		return result
-	return null
+		if child.has_method("connect_to_blueprint"):
+			child.connect_to_blueprint(self)
 
 
 func get_all_datablocks_of_type(type:String) -> Array:
@@ -75,7 +65,15 @@ func get_all_datablocks_of_type(type:String) -> Array:
 	return return_array
 			
 
-
+func spawn_shell(shell_datablock_name:String = ""):
+	var s:ShellDatablock
+	if shell_datablock_name:
+		s = get_node(shell_datablock_name)
+	if not s and active_datablocks.has("ShellDatablock"):
+		s = active_datablocks["ShellDatablock"]
+	else:
+		return null
+	return s._spawn_shell()
 # Attribute Functions-----------------------------------------------------------
 func _on_attribute_value_changed(attr_set, id, old_value, new_value):
 	pass
