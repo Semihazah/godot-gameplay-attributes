@@ -24,9 +24,6 @@ var _cached_value: float
 
 var _additional_data: = {}
 
-var min_attribute_spec:AttributeSpec
-var max_attribute_spec:AttributeSpec
-
 var lock_attribute: = false
 
 func _add_attribute(attr_set, data = {}):
@@ -237,3 +234,15 @@ func apply_base_modifier(mod:GameplayEffectModifierSpec):
 	var cache = _cached_value
 	
 	emit_signal("attribute_value_changed", attribute_data.attribute_id, cache, self._final_value)
+
+
+# Data Functions ***************************************************************
+func _save() -> Dictionary:
+	var save_dict = {
+		"script":get_script(),
+		"attribute_resource":attribute_data.resource_path,
+		"additional_data":_additional_data,
+		"locked":lock_attribute,
+		"base":_base_value,
+	}
+	return save_dict

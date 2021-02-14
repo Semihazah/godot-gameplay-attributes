@@ -198,3 +198,19 @@ func _set_attribute_injectors(new_array:Array):
 			attribute_injectors[i] == null
 			if Engine.editor_hint:
 				print("Expected class: AttributeInjector")
+
+
+# Data Functions ***************************************************************
+func _save() -> Dictionary:
+	var save_dict = {
+		"script":get_script(),
+		"attributes":{},
+		"children":{},
+	}
+	for attr in attributes:
+		if attr is AttributeSpec:
+			save_dict["attributes"][attr.attribute_data.attribute_id] = attr._save()
+	for child in get_children():
+		if child.has_method("_save"):
+			save_dict["children"][child.name] = child._save()
+	return save_dict

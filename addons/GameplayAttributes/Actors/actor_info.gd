@@ -59,4 +59,23 @@ func _spawn_shell() -> Node:
 	if shell.has_method("_connect_to_datablock"):
 		shell._connect_to_datablock(self)
 	return shell
+
+# Data Functions ***************************************************************
+func _save() -> Dictionary:
+	var save_dict = {
+		"script": get_script(),
+		"actor_name": self.actor_name,
+		"actor_description":self.actor_description,
+		"shell_scene":shell_scene,
+		"gender_type":shell_gender,
+	}
+	if self.actor_portrait:
+		save_dict["actor_portait"] = self.actor_portrait.resource_path
+	var faction_paths = []
+	for faction in self.actor_factions:
+		faction_paths.append(faction.resource_path)
+	save_dict["actor_factions"] = faction_paths
 	
+	if shell.has_method("_save"):
+		save_dict["shell"] = shell._save()
+	return save_dict

@@ -31,7 +31,7 @@ var stack_list: = {}
 var cached_duration: = 0.0
 var cached_period: = 0.0
 var cached_turn_duration:= 0
-var duration_turns_remaining:int
+var turn_duration_remaining:int
 
 var effect_enabled = true setget set_effect_enabled, get_effect_enabled
 
@@ -92,7 +92,7 @@ func _ready():
 			var turn_group = get_tree().get_nodes_in_group(gameplay_effect.turn_duration_signal_group)
 			for node in turn_group:
 				node.connect(gameplay_effect.turn_duration_signal, self, "_on_turn_pass")
-			duration_turns_remaining = get_turn_duration_magnitude()
+			turn_duration_remaining = get_turn_duration_magnitude()
 				
 				
 	else:	#Instant
@@ -131,13 +131,13 @@ func _on_duration_timeout():
 			premature_expiration = false
 			queue_free()
 		GameplayEffect.StackExpirationPolicy.REMOVE_SINGLE_STACK_AND_REFRESH_DURATION:
-			remove_random_stack()
+			remove_stack()
 			if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION:
 					durationTimer.start(get_duration_magnitude())
 			if gameplay_effect.turn_duration_magnitude_calculation_type and \
 					gameplay_effect.turn_duration_signal_group and \
 					gameplay_effect.turn_duration_signal:
-				duration_turns_remaining = get_turn_duration_magnitude()
+				turn_duration_remaining = get_turn_duration_magnitude()
 			
 		GameplayEffect.StackExpirationPolicy.REFRESH_DURATION:
 			if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION:
@@ -145,7 +145,7 @@ func _on_duration_timeout():
 			if gameplay_effect.turn_duration_magnitude_calculation_type and \
 						gameplay_effect.turn_duration_signal_group and \
 						gameplay_effect.turn_duration_signal:
-				duration_turns_remaining = get_turn_duration_magnitude()
+				turn_duration_remaining = get_turn_duration_magnitude()
 
 
 func get_duration_magnitude():
@@ -169,12 +169,10 @@ func clear_stack_list():
 		emit_signal("stack_removed", self)
 
 
-func remove_random_stack():
-	var index = randi() % stack_list.keys().size()
-	var subindex = randi() % stack_list.keys()[index].size()
-	stack_list.keys()[index].remove(subindex)
-	if stack_list.keys()[index].empty():
-		stack_list.keys().remove(index)
+func remove_stack():
+	stack_list.keys()[0] -= 1
+	if stack_list.keys()[0] <= 0:
+		stack_list.keys().remove(0)
 	emit_signal("stack_removed", self)
 
 
@@ -329,38 +327,39 @@ func apply_stacking_policies():
 
 
 func add_stack(effect_spec:GameplayEffectSpec):
-	if gameplay_effect.duration_type != GameplayEffect.DurationType.INSTANT:
-		var search_source = effect_spec.source
-		if stack_list.has(search_source):
-			if gameplay_effect.duration_type == GameplayEffect.StackingType.AGGREGATE_BY_SOURCE:
-				if stack_list[search_source].size() < gameplay_effect.stack_limit_count:
-					stack_list[search_source].append(effect_spec)
-					apply_stacking_policies()
-				else:
-					if not gameplay_effect.overflow_effects.empty():
-						for eff in gameplay_effect.overflow_effects:
-							apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
-					if not gameplay_effect.overflow_deny_application:
-						apply_stacking_policies()
-					elif gameplay_effect.overflow_clear_stack:
-						clear_stack_list()
-					emit_signal("overflow_triggered", self)
+	if gameplay_effect.duration_type == GameplayEffect.DurationType.INSTANT:
+		return
+	var search_source = effect_spec.source.name
+	if stack_list.has(search_source):
+		if gameplay_effect.duration_type == GameplayEffect.StackingType.AGGREGATE_BY_SOURCE:
+			if stack_list[search_source] < gameplay_effect.stack_limit_count:
+				stack_list[search_source] += 1
+				apply_stacking_policies()
 			else:
-				if get_num_stacks() < gameplay_effect.stack_limit_count:
-					stack_list[search_source].append(effect_spec)
+				if not gameplay_effect.overflow_effects.empty():
+					for eff in gameplay_effect.overflow_effects:
+						apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
+				if not gameplay_effect.overflow_deny_application:
 					apply_stacking_policies()
-				else:
-					if not gameplay_effect.overflow_effects.empty():
-						for eff in gameplay_effect.overflow_effects:
-							apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
-					if not gameplay_effect.overflow_deny_application:
-						apply_stacking_policies()
-					elif gameplay_effect.overflow_clear_stack:
-						clear_stack_list()
-					emit_signal("overflow_triggered", self)
+				elif gameplay_effect.overflow_clear_stack:
+					clear_stack_list()
+				emit_signal("overflow_triggered", self)
 		else:
-			stack_list[search_source] = [effect_spec]
-			apply_stacking_policies()
+			if get_num_stacks() < gameplay_effect.stack_limit_count:
+				stack_list[search_source] += 1
+				apply_stacking_policies()
+			else:
+				if not gameplay_effect.overflow_effects.empty():
+					for eff in gameplay_effect.overflow_effects:
+						apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
+				if not gameplay_effect.overflow_deny_application:
+					apply_stacking_policies()
+				elif gameplay_effect.overflow_clear_stack:
+					clear_stack_list()
+				emit_signal("overflow_triggered", self)
+	else:
+		stack_list[search_source] = 1
+		apply_stacking_policies()
 
 
 func apply_other_effect(source_data: Node, target_data:Node, effect_resource:GameplayEffect, source_description:String = "", add_data = {}):
@@ -370,8 +369,8 @@ func apply_other_effect(source_data: Node, target_data:Node, effect_resource:Gam
 
 
 func _on_turn_pass():
-	duration_turns_remaining -= 1
-	if duration_turns_remaining <= 0:
+	turn_duration_remaining -= 1
+	if turn_duration_remaining <= 0:
 		if not gameplay_effect.duration_turn_is_premature:
 			premature_expiration = false
 		_on_duration_timeout()
@@ -380,5 +379,22 @@ func _on_turn_pass():
 func get_num_stacks() -> int:
 	var sum:int = 0
 	for stack_source in stack_list.keys():
-		sum += stack_list[sum].size()
+		sum += stack_list[stack_source].size()
 	return sum
+
+# Data Functions ***************************************************************
+func _save() -> Dictionary:
+	var save_dict = {
+		"script":get_script(),
+		"effect_resource":gameplay_effect.resource_path,
+		"period_time_left":periodTimer.time_left,
+		"period_time_stopped":periodTimer.is_stopped(),
+		"duration_time_left":durationTimer.time_left,
+		"duration_time_stopped":durationTimer.is_stopped(),
+		"source_path":source.get_path(),
+		"target_path":target.get_path(),
+		"effect_source_description":effect_source_description,
+		"additional_data":additional_data,
+		"stack_list":stack_list,
+	}
+	return save_dict

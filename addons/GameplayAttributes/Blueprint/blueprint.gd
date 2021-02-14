@@ -1,13 +1,12 @@
 class_name Blueprint
 extends Node
 
-var Datablock = load("res://addons/GameplayAttributes/Blueprint/datablock.gd")
+const Datablock = preload("res://addons/GameplayAttributes/Blueprint/datablock.gd")
 
 export(String) var blueprint_id
 export(PoolStringArray) var default_tags
 
 var tagContainer:TagContainer = TagContainer.new()
-var active_datablocks = {}
 
 var description setget, get_description
 var icon:Texture setget, get_icon
@@ -19,7 +18,6 @@ var desc_func:FuncRef
 var shell_func:FuncRef
 
 var blackboard = {}
-
 
 func _to_string():
 	if name_func:
@@ -52,6 +50,8 @@ func get_shell():
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	if blueprint_id:
+		add_to_group("Persist")
 	for child in get_children():
 		if child.has_method("connect_to_blueprint"):
 			child.connect_to_blueprint(self)
@@ -69,11 +69,28 @@ func spawn_shell(shell_datablock_name:String = ""):
 	var s:ShellDatablock
 	if shell_datablock_name:
 		s = get_node(shell_datablock_name)
-	if not s and active_datablocks.has("ShellDatablock"):
-		s = active_datablocks["ShellDatablock"]
+	if not s and has_active_db("ShellDatablock"):
+		s = get_active_db("ShellDatablock")
 	else:
 		return null
 	return s._spawn_shell()
+
+func set_active_db(datablock_type_id:String, datablock_path:String):
+	bb_set(datablock_type_id, datablock_path, "active_db")
+
+
+func has_active_db(type:String) -> bool:
+	return bb_has(type, "active_db")
+
+
+func get_active_db(datablock_type_id:String) -> Node:
+	return get_node(get_active_db_path(datablock_type_id))
+
+
+func get_active_db_path(datablock_type_id:String) -> String:
+	if has_active_db(datablock_type_id):
+		return bb_get(datablock_type_id, "active_db")
+	return ""
 # Attribute Functions-----------------------------------------------------------
 func _on_attribute_value_changed(attr_set, id, old_value, new_value):
 	pass
@@ -84,36 +101,28 @@ func on_actor_name_change(old_name, new_name):
 
 
 func add_gameplay_effect(new_effect:GameplayEffect, source, description = "", additional_info = {}):
-	if not active_datablocks.has("AttributeSet"):
-		return null
-	var attr_set:AttributeSet = active_datablocks["AttributeSet"]
+	var attr_set:AttributeSet = get_active_db("AttributeSet")
 	if not attr_set:
 		return null
 	return attr_set.add_gameplay_effect(new_effect, source, description, additional_info)
 
 
 func get_attr(attr_id:String, tag_filter = PoolStringArray()):
-	if not active_datablocks.has("AttributeSet"):
-		return null
-	var attr_set:AttributeSet = active_datablocks["AttributeSet"]
+	var attr_set:AttributeSet = get_active_db("AttributeSet")
 	if not attr_set:
 		return null
 	return attr_set.get_attr_value(attr_id, tag_filter)
 
 
 func get_attr_base(attr_id:String):
-	if not active_datablocks.has("AttributeSet"):
-		return null
-	var attr_set:AttributeSet = active_datablocks["AttributeSet"]
+	var attr_set:AttributeSet = get_active_db("AttributeSet")
 	if not attr_set:
 		return null
 	return attr_set.get_attr_base(attr_id)
 
 
 func get_attr_spec(attr_id:String):
-	if not active_datablocks.has("AttributeSet"):
-		return null
-	var attr_set:AttributeSet = active_datablocks["AttributeSet"]
+	var attr_set:AttributeSet = get_active_db("AttributeSet")
 	if not attr_set:
 		return null
 	
@@ -123,22 +132,38 @@ func get_attr_spec(attr_id:String):
 		return null
 
 # Blackboard Functions *********************************************************
-func set(key, value, blackboard_name = 'default'):
+func bb_set(key, value, blackboard_name = 'default'):
 	if not blackboard.has(blackboard_name):
 		blackboard[blackboard_name] = {}
 
 	blackboard[blackboard_name][key] = value
 
 
-func get(key, blackboard_name = 'default'):
-	if has(key, blackboard_name):
+func bb_get(key, blackboard_name = 'default'):
+	if bb_has(key, blackboard_name):
 		return blackboard[blackboard_name][key]
 
 
-func has(key, blackboard_name = 'default'):
+func bb_has(key, blackboard_name = 'default'):
 	return blackboard.has(blackboard_name) and blackboard[blackboard_name].has(key) and blackboard[blackboard_name][key] != null
 
 
-func erase(key, blackboard_name = 'default'):
+func bb_erase(key, blackboard_name = 'default'):
 	if blackboard.has(blackboard_name):
 		 blackboard[blackboard_name][key] = null
+
+
+# Data Functions ***************************************************************
+func _save() -> Dictionary:
+	var save_dict = {
+		"script":get_script(),
+		"name":name,
+		"parent":get_parent().get_path(),
+		"tags":tagContainer.tags,
+		"blackboard":blackboard,
+		"children":{},
+	}
+	for child in get_children():
+		if child.has_method("_save"):
+			save_dict["children"][child.name] = child.save()
+	return save_dict
