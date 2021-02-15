@@ -63,19 +63,41 @@ func _spawn_shell() -> Node:
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
-		"script": get_script(),
+		"script":get_script().resource_path,
 		"actor_name": self.actor_name,
 		"actor_description":self.actor_description,
-		"shell_scene":shell_scene,
+		"shell_scene":shell_scene.resource_path,
 		"gender_type":shell_gender,
 	}
 	if self.actor_portrait:
-		save_dict["actor_portait"] = self.actor_portrait.resource_path
+		save_dict["actor_portrait"] = self.actor_portrait.resource_path
 	var faction_paths = []
 	for faction in self.actor_factions:
 		faction_paths.append(faction.resource_path)
 	save_dict["actor_factions"] = faction_paths
 	
-	if shell.has_method("_save"):
+	if shell and shell.has_method("_save"):
 		save_dict["shell"] = shell._save()
 	return save_dict
+
+
+func _load(load_dict:Dictionary) -> bool:
+	actor_name = load_dict["actor_name"]
+	actor_description = load_dict["actor_description"]
+	shell_scene = load(load_dict["shell_scene"])
+	shell_gender = load_dict["shell_gender"]
+	
+	if load_dict.has("actor_portrait"):
+		actor_portrait = load(load_dict["actor_portrait"])
+	
+	for faction_path in load_dict["actor_factions"]:
+		actor_factions.append(load(faction_path))
+	
+	if load_dict.has("shell"):
+		var shell_dict = load_dict["shell"]
+		var script:Script = load(shell_dict["script"])
+		var shell = script.new()
+		if shell.has_method("_load"):
+			shell._load(shell_dict)
+	return true
+	

@@ -4,7 +4,7 @@ export(bool) var initialize_active = true
 var datablock_type_id:String = ""
 var blueprint
 
-func connect_to_blueprint(b:Blueprint):
+func connect_to_blueprint(b):
 	blueprint = b
 	if initialize_active and datablock_type_id:
 		blueprint.set_active_db(datablock_type_id, b.get_path_to(self))
@@ -20,3 +20,6 @@ func _connect_to_blueprint(blueprint):
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	return {}
+
+func _load(load_dict:Dictionary) -> bool:
+	return false

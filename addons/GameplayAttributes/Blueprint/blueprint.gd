@@ -1,7 +1,7 @@
 class_name Blueprint
 extends Node
 
-const Datablock = preload("res://addons/GameplayAttributes/Blueprint/datablock.gd")
+onready var Datablock = load("res://addons/GameplayAttributes/Blueprint/datablock.gd")
 
 export(String) var blueprint_id
 export(PoolStringArray) var default_tags
@@ -156,7 +156,7 @@ func bb_erase(key, blackboard_name = 'default'):
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
-		"script":get_script(),
+		"script":get_script().resource_path,
 		"name":name,
 		"parent":get_parent().get_path(),
 		"tags":tagContainer.tags,
@@ -167,3 +167,20 @@ func _save() -> Dictionary:
 		if child.has_method("_save"):
 			save_dict["children"][child.name] = child.save()
 	return save_dict
+
+func _load(load_dict:Dictionary) -> bool:
+	name = load_dict["name"]
+	get_node(load_dict["parent"]).add_child(self)
+	tagContainer.tags = load_dict["tags"]
+	blackboard = load_dict["blackboard"]
+	
+	for c_name in load_dict["children"].keys():
+		var c_dict = load_dict["children"][c_name]
+		var script:Script = load(c_dict["script"])
+		var c:Node = script.new()
+		if c:
+			add_child(c)
+			c._load(c_dict)
+			if c.has_method("connect_to_blueprint"):
+				c.connect_to_blueprint(self)
+	return true

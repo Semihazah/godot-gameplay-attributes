@@ -17,11 +17,12 @@ var gameplay_effect:GameplayEffect
 
 var periodTimer:Timer
 var durationTimer:Timer
+var turn_duration_remaining:int
 
-var created_modifiers:Array
+var created_modifiers: = []
 
-var source:Node
-var target:Node
+var source:Blueprint
+var target:Blueprint
 
 var effect_source_description:String
 var additional_data: = {}
@@ -31,7 +32,6 @@ var stack_list: = {}
 var cached_duration: = 0.0
 var cached_period: = 0.0
 var cached_turn_duration:= 0
-var turn_duration_remaining:int
 
 var effect_enabled = true setget set_effect_enabled, get_effect_enabled
 
@@ -41,18 +41,34 @@ var premature_expiration = true
 
 var tagContainer:TagContainer setget set_tag_container, get_tag_container
 
-func _init(source_data:Node, target_data:Node, effect_resource:GameplayEffect, source_description = "", add_data = {}):
-	created_modifiers = []
-	gameplay_effect = effect_resource
-	source = source_data
-	target = target_data
-	additional_data = add_data
-	if target_data.get("tagContainer"):
-		self.tagContainer = target_data.tagContainer
-	effect_source_description = source_description
+func _init(attr_set:AttributeSet):
+	target = attr_set.blueprint
+	if target.get("tagContainer"):
+		self.tagContainer = target.tagContainer
+	connect("modifiers_applied", attr_set, "on_modifiers_applied")
+	connect("effect_activate", attr_set, "on_effect_activate")
+	connect("effect_deactivate", attr_set, "on_effect_deactivate")
+	connect("effect_end", attr_set, "on_effect_end")
+	
+	periodTimer = Timer.new()
+	periodTimer.connect("timeout", self, "_on_period_timeout")
+	add_child(periodTimer)
+	
+	durationTimer = Timer.new()
+	durationTimer.connect("timeout", self, "_on_duration_timeout")
+	add_child(durationTimer)
 
 
-func _ready():
+func set_effect_info(_source:Node, _effect_resource:GameplayEffect, _source_description = "", _add_data = {}):
+	# Call either this or _load()
+	gameplay_effect = _effect_resource
+	source = _source
+	additional_data = _add_data
+	effect_source_description = _source_description
+	activate_effect()
+
+
+func activate_effect():
 	if tagContainer:
 #		print("Found tag container: ", tagContainer)
 		check_tags()
@@ -66,17 +82,7 @@ func _ready():
 			queue_free()
 			return
 	
-#	print("Effect: begining ready function")
-
-	
 	if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION || gameplay_effect.duration_type == GameplayEffect.DurationType.INFINITE:
-		periodTimer = Timer.new()
-		periodTimer.connect("timeout", self, "_on_period_timeout")
-		add_child(periodTimer)
-		
-		durationTimer = Timer.new()
-		durationTimer.connect("timeout", self, "_on_duration_timeout")
-		add_child(durationTimer)
 		if gameplay_effect.period_time > 0:
 			if gameplay_effect.period_execute_modifiers_on_application:
 				send_modifiers()
@@ -93,17 +99,13 @@ func _ready():
 			for node in turn_group:
 				node.connect(gameplay_effect.turn_duration_signal, self, "_on_turn_pass")
 			turn_duration_remaining = get_turn_duration_magnitude()
-				
-				
 	else:	#Instant
 #		print("Applying instant effect %s" % gameplay_effect.effect_ID)
 		send_modifiers()
 		premature_expiration = false
 		queue_free()
-	
-
+		
 	emit_signal("effect_start", self)
-	
 
 
 func send_modifiers():
@@ -125,8 +127,11 @@ func _on_period_timeout():
 func _on_duration_timeout(): 
 	match gameplay_effect.stack_expiration_policy:
 		GameplayEffect.StackExpirationPolicy.CLEAR_ENTIRE_STACK:
-			for eff in gameplay_effect.expiration_effects_routine:
-				apply_other_effect(source, target, eff, eff.effect_source_description, additional_data)
+			for eff in gameplay_effect.expiration_effects_routine.keys():
+				var desc = effect_source_description
+				if eff.additional_data.has("effect_description"):
+					desc = eff.additional_data["effect_description"]
+				apply_other_effect(eff, source, target, desc, eff.additional_data)
 			clear_stack_list()
 			premature_expiration = false
 			queue_free()
@@ -207,7 +212,10 @@ func queue_free():
 #	print("Ending effect")
 	if premature_expiration:
 		for eff in gameplay_effect.premature_expiration_effect_classes:
-			apply_other_effect(source, target, eff, eff.effect_source_description, additional_data)
+			var desc = effect_source_description
+			if eff.additional_data.has("effect_description"):
+				desc = eff.additional_data["effect_description"]
+			apply_other_effect(eff, source, target, desc, eff.additional_data)
 	remove_tags()
 	effect_enabled = false
 	destroy_effects()
@@ -338,7 +346,10 @@ func add_stack(effect_spec:GameplayEffectSpec):
 			else:
 				if not gameplay_effect.overflow_effects.empty():
 					for eff in gameplay_effect.overflow_effects:
-						apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
+						var desc = effect_source_description
+						if eff.additional_data.has("effect_description"):
+							desc = eff.additional_data["effect_description"]
+						apply_other_effect(eff, effect_spec.source, effect_spec.target, desc, eff.additional_data)
 				if not gameplay_effect.overflow_deny_application:
 					apply_stacking_policies()
 				elif gameplay_effect.overflow_clear_stack:
@@ -351,7 +362,10 @@ func add_stack(effect_spec:GameplayEffectSpec):
 			else:
 				if not gameplay_effect.overflow_effects.empty():
 					for eff in gameplay_effect.overflow_effects:
-						apply_other_effect(effect_spec.source, effect_spec.target, eff, effect_spec.effect_source_description, additional_data)
+						var desc = effect_source_description
+						if eff.additional_data.has("effect_description"):
+							desc = eff.additional_data["effect_description"]
+						apply_other_effect(eff, effect_spec.source, effect_spec.target, desc, eff.additional_data)
 				if not gameplay_effect.overflow_deny_application:
 					apply_stacking_policies()
 				elif gameplay_effect.overflow_clear_stack:
@@ -362,10 +376,8 @@ func add_stack(effect_spec:GameplayEffectSpec):
 		apply_stacking_policies()
 
 
-func apply_other_effect(source_data: Node, target_data:Node, effect_resource:GameplayEffect, source_description:String = "", add_data = {}):
-	if target_data.get("attributeSet"):
-		var attr_set = target_data.attributeSet
-		attr_set.apply_other_effect(source_data, target_data, effect_resource, source_description, add_data)
+func apply_other_effect(_new_effect:GameplayEffect, _source: Blueprint, _target:Blueprint, _source_description = "", _additional_info = {}):
+	_target.add_gameplay_effect(_new_effect, _source, _source_description, _additional_info)
 
 
 func _on_turn_pass():
@@ -385,16 +397,39 @@ func get_num_stacks() -> int:
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
-		"script":get_script(),
+		"script":get_script().resource_path,
 		"effect_resource":gameplay_effect.resource_path,
+		
 		"period_time_left":periodTimer.time_left,
-		"period_time_stopped":periodTimer.is_stopped(),
+		"period_time_paused":periodTimer.paused,
+		
 		"duration_time_left":durationTimer.time_left,
-		"duration_time_stopped":durationTimer.is_stopped(),
+		"duration_time_paused":durationTimer.paused,
+		
+		"turn_duration_remaining":turn_duration_remaining,
+		
 		"source_path":source.get_path(),
-		"target_path":target.get_path(),
 		"effect_source_description":effect_source_description,
 		"additional_data":additional_data,
 		"stack_list":stack_list,
 	}
 	return save_dict
+
+
+func _load(load_dict:Dictionary) -> bool:
+	gameplay_effect = load(load_dict["effect_resource"])
+	
+	periodTimer.start(load_dict["period_time_left"])
+	periodTimer.paused = load_dict["period_time_paused"]
+	
+	durationTimer.start(load_dict["duration_time_left"])
+	durationTimer.paused = load_dict["duration_time_paused"]
+	
+	source = get_node(load_dict["source_path"])
+	effect_source_description = load_dict["effect_source_description"]
+	additional_data = load_dict["additional_data"]
+	stack_list = load_dict["stack_list"]
+	turn_duration_remaining = load_dict["turn_duration_remaining"]
+	
+	activate_effect()
+	return true

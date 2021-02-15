@@ -26,6 +26,8 @@ func _set_base_value_calc(new_function):
 		base_value_calculation = new_function
 	elif Engine.editor_hint and base_value_calculation != new_function:
 		print("Expected class: MagnitudeCalculation")
+
+
 func _set_min_value_calc(new_function):
 	if new_function is GDScript:
 		new_function = new_function.new()
@@ -33,7 +35,8 @@ func _set_min_value_calc(new_function):
 		min_value_mag_calc = new_function
 	elif Engine.editor_hint and min_value_mag_calc != new_function:
 		print("Expected class: MagnitudeCalculation")
-		
+
+
 func _set_max_value_calc(new_function):
 	if new_function is GDScript:
 		new_function = new_function.new()

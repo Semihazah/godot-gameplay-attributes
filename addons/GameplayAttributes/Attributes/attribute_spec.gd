@@ -239,10 +239,18 @@ func apply_base_modifier(mod:GameplayEffectModifierSpec):
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
-		"script":get_script(),
+		"script":get_script().resource_path,
 		"attribute_resource":attribute_data.resource_path,
 		"additional_data":_additional_data,
 		"locked":lock_attribute,
 		"base":_base_value,
 	}
 	return save_dict
+
+
+func _load(load_dict:Dictionary) -> bool:
+	attribute_data = load(load_dict["attribute_resource"])
+	_additional_data = load_dict["additional_data"]
+	lock_attribute = load_dict["locked"]
+	_base_value = load_dict["base"]
+	return true

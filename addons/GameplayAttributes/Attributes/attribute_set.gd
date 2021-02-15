@@ -110,10 +110,12 @@ func add_attribute_file(attr:Attribute, starting_value:float, add_data = {}):
 	return null
 
 
-func add_gameplay_effect(new_effect:GameplayEffect, source, description = "", additional_info = {}):
+func add_gameplay_effect(_new_effect:GameplayEffect, _source:Blueprint, _source_description = "", _additional_info = {}):
 #	print("Adding gameplay effect %s" % new_effect.effect_ID)
-	var new_spec: = GameplayEffectSpec.new(source, blueprint, new_effect, description, additional_info)
-	add_gameplay_effect_spec(new_spec)
+	var new_spec: = GameplayEffectSpec.new(self)
+	new_spec.set_effect_info(_source, _new_effect, _source_description, _additional_info)
+	if new_spec:
+		add_gameplay_effect_spec(new_spec)
 	return new_spec
 	
 
@@ -121,29 +123,15 @@ func add_gameplay_effect_spec(new_effect:GameplayEffectSpec):
 	var effect_resource = new_effect.gameplay_effect
 	if effect_resource.stacking_type == GameplayEffect.StackingType.NONE:
 #			print("AttributeSet: New effect recieved!")
-			new_effect.connect("modifiers_applied", self, "on_modifiers_applied")
-			new_effect.connect("effect_activate", self, "on_effect_activate")
-			new_effect.connect("effect_deactivate", self, "on_effect_deactivate")
-			new_effect.connect("effect_end", self, "on_effect_end")
 			add_child(new_effect)
 	else:
 		var current_effect: = find_effect_with_id(effect_resource.effect_ID)
 		if current_effect:
 			current_effect.add_stack(new_effect)
 		else:
-			new_effect.connect("modifiers_applied", self, "on_modifiers_applied")
-			new_effect.connect("effect_activate", self, "on_effect_activate")
-			new_effect.connect("effect_deactivate", self, "on_effect_deactivate")
-			new_effect.connect("effect_end", self, "on_effect_end")
 			add_child(new_effect)
 	emit_signal("effect_added", self, new_effect)
 #	MainLog.add_line("Effect added: %s" % effect_resource.effect_name)
-
-
-func apply_other_effect(source_data: Node, target_data:Node, effect_resource:GameplayEffect, source_description:String = "", add_data = {}):
-	if target_data.get("attributeSet"):
-		var new_spec: = GameplayEffectSpec.new(source_data, target_data, effect_resource, source_description, add_data)
-		target_data.attributeSet.add_new_effect(new_spec)
 
 
 func find_effect_with_id(id:String) -> GameplayEffectSpec:
@@ -203,7 +191,7 @@ func _set_attribute_injectors(new_array:Array):
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
-		"script":get_script(),
+		"script":get_script().resource_path,
 		"attributes":{},
 		"children":{},
 	}
@@ -214,3 +202,27 @@ func _save() -> Dictionary:
 		if child.has_method("_save"):
 			save_dict["children"][child.name] = child._save()
 	return save_dict
+
+
+func _load(load_dict:Dictionary) -> bool:
+	name = load_dict["name"]
+	for attr_id in load_dict["attributes"].keys():
+		var a_dict = load_dict["attributes"][attr_id]
+		var script:Script = load(a_dict["script"])
+		var attr:AttributeSpec = script.new()
+		if attr:
+			attr._add_attribute(self)
+			attr._load(a_dict)
+			attributes[attr_id] = attr
+	
+	for c_name in load_dict["children"].keys():
+		var c_dict = load_dict["children"][c_name]
+		var script:Script = load(c_dict["script"])
+		var c = script.new()
+		if c is GameplayEffectSpec:
+			add_gameplay_effect_spec(c)
+			c._load(c_dict)
+		elif c is Node:
+			add_child(c)
+			c._load(c_dict)
+	return true
