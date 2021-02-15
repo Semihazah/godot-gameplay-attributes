@@ -17,6 +17,7 @@ var gameplay_effect:GameplayEffect
 
 var periodTimer:Timer
 var durationTimer:Timer
+var conditionTimer:Timer
 var turn_duration_remaining:int
 
 var created_modifiers: = []
@@ -41,7 +42,7 @@ var premature_expiration = true
 
 var tagContainer:TagContainer setget set_tag_container, get_tag_container
 
-func _init(attr_set:AttributeSet):
+func _init(attr_set):
 	target = attr_set.blueprint
 	if target.get("tagContainer"):
 		self.tagContainer = target.tagContainer
@@ -58,6 +59,13 @@ func _init(attr_set:AttributeSet):
 	durationTimer.connect("timeout", self, "_on_duration_timeout")
 	add_child(durationTimer)
 
+	conditionTimer = Timer.new()
+	conditionTimer.connect("timeout", self, "_on_condition_timeout")
+	add_child(conditionTimer)
+	
+func _ready():
+	set_process(false)
+
 
 func set_effect_info(_source:Node, _effect_resource:GameplayEffect, _source_description = "", _add_data = {}):
 	# Call either this or _load()
@@ -69,18 +77,22 @@ func set_effect_info(_source:Node, _effect_resource:GameplayEffect, _source_desc
 
 
 func activate_effect():
-	if tagContainer:
-#		print("Found tag container: ", tagContainer)
-		check_tags()
-		tagContainer.connect("tag_added", self, "on_tag_added")
-		tagContainer.connect("tag_removed", self, "on_tag_removed")
-		
-		if effect_enabled:
-			add_tags()
-	else:
-		if not gameplay_effect.tags_application_require.empty():
+	var apply_chance = gameplay_effect.get_apply_chance(source, target, additional_data)
+	if apply_chance > randf():
+		queue_free()
+		return
+	if not gameplay_effect.condition_application.empty():
+		var requirement_met = true
+		for cond in gameplay_effect.condition_application:
+			if cond is Condition:
+				if not cond.check_condition(source, target, additional_data):
+					requirement_met = false
+					break
+		if not requirement_met:
 			queue_free()
 			return
+	if tagContainer and effect_enabled:
+		add_tags()
 	
 	if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION || gameplay_effect.duration_type == GameplayEffect.DurationType.INFINITE:
 		if gameplay_effect.period_time > 0:
@@ -92,7 +104,7 @@ func activate_effect():
 		if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION:
 			durationTimer.start(get_duration_magnitude())
 		
-		if gameplay_effect.turn_duration_magnitude_calculation_type and \
+		if gameplay_effect.turn_duration_magnitude and \
 				gameplay_effect.turn_duration_signal_group and \
 				gameplay_effect.turn_duration_signal:
 			var turn_group = get_tree().get_nodes_in_group(gameplay_effect.turn_duration_signal_group)
@@ -104,7 +116,9 @@ func activate_effect():
 		send_modifiers()
 		premature_expiration = false
 		queue_free()
-		
+	
+	if gameplay_effect.check_conditions_timer > 0:
+		conditionTimer.start(gameplay_effect.check_conditions_timer)
 	emit_signal("effect_start", self)
 
 
@@ -139,7 +153,7 @@ func _on_duration_timeout():
 			remove_stack()
 			if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION:
 					durationTimer.start(get_duration_magnitude())
-			if gameplay_effect.turn_duration_magnitude_calculation_type and \
+			if gameplay_effect.turn_duration_magnitude and \
 					gameplay_effect.turn_duration_signal_group and \
 					gameplay_effect.turn_duration_signal:
 				turn_duration_remaining = get_turn_duration_magnitude()
@@ -147,10 +161,14 @@ func _on_duration_timeout():
 		GameplayEffect.StackExpirationPolicy.REFRESH_DURATION:
 			if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION:
 					durationTimer.start(get_duration_magnitude())
-			if gameplay_effect.turn_duration_magnitude_calculation_type and \
+			if gameplay_effect.turn_duration_magnitude and \
 						gameplay_effect.turn_duration_signal_group and \
 						gameplay_effect.turn_duration_signal:
 				turn_duration_remaining = get_turn_duration_magnitude()
+
+
+func _on_condition_timeout():
+	self.effect_enabled = check_ongoing_conditions()
 
 
 func get_duration_magnitude():
@@ -217,62 +235,21 @@ func queue_free():
 				desc = eff.additional_data["effect_description"]
 			apply_other_effect(eff, source, target, desc, eff.additional_data)
 	remove_tags()
-	effect_enabled = false
+	self.effect_enabled = false
 	destroy_effects()
 	emit_signal("effect_end", self)
 	.queue_free()
 
 
-func on_tag_added(tag_added):
-#	print("Tag Added!: %s" % tag_added)
-	check_tags()
-
-
-func on_tag_removed(tag_removed):
-#	print("Tag Removed: %s" % tag_removed)
-	check_tags()
-
-
-func check_tags():
-	if not gameplay_effect.removal_require_tags.empty():
-		var require_met = true
-		for tag in gameplay_effect.removal_require_tags:
-			if not tagContainer.has_tag(tag, true):
-				require_met = false
-		if require_met:
-			queue_free()
-			return
-			
-	if not gameplay_effect.removal_ignore_tags.empty():
-		var require_met = true
-		for tag in gameplay_effect.removal_ignore_tags:
-			if tagContainer.has_tag(tag, true):
-				require_met = false
-		if require_met:
-			queue_free()
-			return
-	
-	var can_continue01 = true
-	if not gameplay_effect.ongoing_require_tags.empty():
-		for tag in gameplay_effect.ongoing_require_tags:
-			if not tagContainer.has_tag(tag, true):
-				can_continue01 = false
-				break
-
-
-	var can_continue02 = true
-	if not gameplay_effect.ongoing_ignore_tags.empty():
-		for tag in gameplay_effect.ongoing_ignore_tags:
-			if tagContainer.has_tag(tag, true):
-				can_continue02 = false
-				break
-	
-	if not can_continue01 or not can_continue02:
-		self.effect_enabled = false
-	else:
-		self.effect_enabled = true
-		
-
+func check_ongoing_conditions() -> bool:
+	if gameplay_effect.condition_ongoing.empty():
+		return true
+	var requirements_met = true
+	for cond in gameplay_effect.condition_ongoing:
+		if cond is Condition:
+			if not cond.check_condition(source, target, additional_data):
+				return false
+	return true
 
 
 func add_tags():
@@ -386,6 +363,7 @@ func _on_turn_pass():
 		if not gameplay_effect.duration_turn_is_premature:
 			premature_expiration = false
 		_on_duration_timeout()
+	self.effect_enabled = check_ongoing_conditions()
 
 
 func get_num_stacks() -> int:

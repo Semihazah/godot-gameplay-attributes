@@ -101,29 +101,29 @@ func on_actor_name_change(old_name, new_name):
 
 
 func add_gameplay_effect(new_effect:GameplayEffect, source, description = "", additional_info = {}):
-	var attr_set:AttributeSet = get_active_db("AttributeSet")
-	if not attr_set:
+	var attr_set = get_active_db("AttributeSet")
+	if attr_set.get_class() != "AttributeSet":
 		return null
 	return attr_set.add_gameplay_effect(new_effect, source, description, additional_info)
 
 
 func get_attr(attr_id:String, tag_filter = PoolStringArray()):
-	var attr_set:AttributeSet = get_active_db("AttributeSet")
-	if not attr_set:
+	var attr_set = get_active_db("AttributeSet")
+	if attr_set.get_class() != "AttributeSet":
 		return null
 	return attr_set.get_attr_value(attr_id, tag_filter)
 
 
 func get_attr_base(attr_id:String):
-	var attr_set:AttributeSet = get_active_db("AttributeSet")
-	if not attr_set:
+	var attr_set = get_active_db("AttributeSet")
+	if attr_set.get_class() != "AttributeSet":
 		return null
 	return attr_set.get_attr_base(attr_id)
 
 
 func get_attr_spec(attr_id:String):
-	var attr_set:AttributeSet = get_active_db("AttributeSet")
-	if not attr_set:
+	var attr_set = get_active_db("AttributeSet")
+	if attr_set.get_class() != "AttributeSet":
 		return null
 	
 	if attr_set.attributes.has(attr_id):

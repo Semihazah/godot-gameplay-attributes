@@ -37,31 +37,27 @@ export(Texture) var effect_icon
 export(String, FILE) var spec_scene_override
 
 export(PoolStringArray) var tags_granted
-export(PoolStringArray) var tags_ongoing_require
-export(PoolStringArray) var tags_ongoing_ignore
-export(PoolStringArray) var tags_application_require
-export(PoolStringArray) var tags_application_ignore
-export(PoolStringArray) var tags_removal_require
-export(PoolStringArray) var tags_removal_ignore
-export(PoolStringArray) var tags_granted_application_immunity_require
-export(PoolStringArray) var tags_granted_application_immunity_ignore
+export(PoolStringArray) var remove_effects_with_tags
+
+export(Array, Resource) var condition_application
+export(Array, Resource) var condition_ongoing
+
+export(float) var check_conditions_timer = 0.5
 
 export(DurationType) var duration_type
-export(Resource) var duration_magnitude_calculation_type setget _set_duration_magnitude_calculation_type
+export(Resource) var duration_magnitude setget _set_duration_magnitude
 
-export(Resource) var turn_duration_magnitude_calculation_type setget _set_turn_duration_magnitude_calculation_type
+export(Resource) var turn_duration_magnitude setget _set_turn_duration_magnitude
 export(String) var turn_duration_signal_group = "emit_turn_signal"
 export(String) var turn_duration_signal = "turn_ended"
 export(bool) var turn_duration_is_premature
 
-export(float) var period_time = -1.0
-export(Curve) var period_table
+
+export(Resource) var period_magnitude setget _set_period_magnitude
 export(bool) var period_execute_modifiers_on_application = true
 export(PeriodicInhibitionPolicy) var period_inhibition_policy
 
-export(float) var apply_chance
-export(Curve) var apply_chance_curve
-export(float) var apply_chance_curve_value
+export(Resource) var apply_chance_magnitude setget _set_apply_chance_magnitude
 
 export(StackingType) var stack_type
 export(int) var stack_limit_count = 0
@@ -82,42 +78,68 @@ export(Dictionary) var additional_data
 
 
 func get_duration_magnitude(source:Node, target:Node, add_data: = {}) -> float:
-	if duration_magnitude_calculation_type.has_method("_calculate_magnitude"):
-		return duration_magnitude_calculation_type._calculate_magnitude(source, target, add_data)
+	if duration_magnitude.has_method("_calculate_magnitude"):
+		return duration_magnitude._calculate_magnitude(source, target, add_data)
 	else:
 		return 0.0
 
 
 func get_period_magnitude(source:Node, target:Node, add_data: = {}) -> float:
-	if period_table:
-		return period_table.interpolate(period_time)
+	if period_magnitude.has_method("_calculate_magnitude"):
+		return period_magnitude._calculate_magnitude(source, target, add_data)
 	else:
-		return period_time
+		return 0.0
 
 
 func get_turn_duration_magnitude(source:Node, target:Node, add_data: = {}) -> int:
-	if turn_duration_magnitude_calculation_type.has_method("_calculate_magnitude"):
-		return int(turn_duration_magnitude_calculation_type._calculate_magnitude(source, target, add_data))
+	if turn_duration_magnitude.has_method("_calculate_magnitude"):
+		return int(turn_duration_magnitude._calculate_magnitude(source, target, add_data))
 	else:
 		return 0
 
+
+func get_apply_chance(source:Node, target:Node, add_data: = {}) -> float:
+	if apply_chance_magnitude.has_method("_calculate_magnitude"):
+		return apply_chance_magnitude._calculate_magnitude(source, target, add_data)
+	else:
+		return 1.0
+
 # Property Functions ***********************************************************
-func _set_duration_magnitude_calculation_type(calculation):
+func _set_duration_magnitude(calculation):
 	if calculation is GDScript:
 		calculation = calculation.new()
 	if calculation is MagnitudeCalculation:
-		duration_magnitude_calculation_type = calculation
-	elif Engine.editor_hint and duration_magnitude_calculation_type != calculation:
+		duration_magnitude = calculation
+	elif Engine.editor_hint and duration_magnitude != calculation:
 		print("Expected class: MagnitudeCalculation")
 
-func _set_turn_duration_magnitude_calculation_type(calculation):
+func _set_turn_duration_magnitude(calculation):
 	if calculation is GDScript:
 		calculation = calculation.new()
 	if calculation is MagnitudeCalculation:
-		turn_duration_magnitude_calculation_type = calculation
-	elif Engine.editor_hint and turn_duration_magnitude_calculation_type != calculation:
+		turn_duration_magnitude = calculation
+	elif Engine.editor_hint and turn_duration_magnitude != calculation:
 		print("Expected class: MagnitudeCalculation")
-		
+
+
+func _set_period_magnitude(calculation):
+	if calculation is GDScript:
+		calculation = calculation.new()
+	if calculation is MagnitudeCalculation:
+		period_magnitude = calculation
+	elif Engine.editor_hint and period_magnitude != calculation:
+		print("Expected class: MagnitudeCalculation")
+
+
+func _set_apply_chance_magnitude(calculation):
+	if calculation is GDScript:
+		calculation = calculation.new()
+	if calculation is MagnitudeCalculation:
+		apply_chance_magnitude = calculation
+	elif Engine.editor_hint() and apply_chance_magnitude != calculation:
+		print("Expected class: MagnitudeCalculation")
+
+
 func _set_overflow_effects(new_array:Array):
 	overflow_effects = new_array
 	for i in new_array.size():

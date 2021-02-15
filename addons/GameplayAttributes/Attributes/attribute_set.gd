@@ -18,6 +18,8 @@ signal attribute_value_max_reached(attr_set, id, new_value, max_value)
 export(Array, Resource) var attribute_injectors setget _set_attribute_injectors
 
 onready var AttributeInjector = load("res://addons/GameplayAttributes/AttributeInjectors/attribute_injector.gd")
+onready var GameplayEffect = load("res://addons/GameplayAttributes/GameplayEffects/gameplay_effect.gd")
+
 var tagContainer:TagContainer
 var attributes = {}
 
