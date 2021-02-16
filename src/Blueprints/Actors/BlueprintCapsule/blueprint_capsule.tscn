@@ -1,0 +1,26 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://addons/GameplayAttributes/Attributes/attribute_set.gd" type="Script" id=1]
+[ext_resource path="res://addons/GameplayAttributes/Blueprint/blueprint.gd" type="Script" id=2]
+[ext_resource path="res://src/Datablocks/field_controller.gd" type="Script" id=3]
+[ext_resource path="res://addons/GameplayAttributes/Actors/actor_info.gd" type="Script" id=4]
+[ext_resource path="res://src/Shells/CapsuleShell/shell_capsule.tscn" type="PackedScene" id=5]
+[ext_resource path="res://addons/StateMachine/StateMachine.gd" type="Script" id=6]
+
+[node name="Blueprint" type="Node"]
+script = ExtResource( 2 )
+
+[node name="AttributeSet" type="Node" parent="."]
+script = ExtResource( 1 )
+
+[node name="ActorInfo" type="Node" parent="."]
+script = ExtResource( 4 )
+shell_scene = ExtResource( 5 )
+shell_gender = 1
+
+[node name="StateMachine" type="Node" parent="ActorInfo"]
+script = ExtResource( 6 )
+initial_state = NodePath("Field")
+
+[node name="Field" type="Node" parent="ActorInfo/StateMachine"]
+script = ExtResource( 3 )

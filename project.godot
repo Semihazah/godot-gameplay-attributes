@@ -9,10 +9,30 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Leaf",
+"class": "ActionLeaf",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/leaves/action.gd"
+}, {
 "base": "ShellDatablock",
 "class": "ActorInfo",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Actors/actor_info.gd"
+}, {
+"base": "Resource",
+"class": "ActorProfile",
+"language": "GDScript",
+"path": "res://src/Profiles/actor_profile.gd"
+}, {
+"base": "Decorator",
+"class": "AlwaysFailDecorator",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/decorators/failer.gd"
+}, {
+"base": "Decorator",
+"class": "AlwaysSucceedDecorator",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/decorators/succeeder.gd"
 }, {
 "base": "Resource",
 "class": "Attribute",
@@ -34,10 +54,35 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Attributes/attribute_spec.gd"
 }, {
+"base": "Spatial",
+"class": "Battlefield",
+"language": "GDScript",
+"path": "res://src/BattleManager/battlefield.gd"
+}, {
+"base": "Node",
+"class": "BehaviorTree",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/behavior_tree.gd"
+}, {
+"base": "BehaviorTree",
+"class": "BehaviorTreeNode",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/bt_node.gd"
+}, {
+"base": "BehaviorTree",
+"class": "BehaviorTreeRoot",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/bt_root.gd"
+}, {
 "base": "Node",
 "class": "Blueprint",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Blueprint/blueprint.gd"
+}, {
+"base": "BehaviorTreeNode",
+"class": "Composite",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/composites/composite.gd"
 }, {
 "base": "Resource",
 "class": "Condition",
@@ -48,6 +93,21 @@ _global_script_classes=[ {
 "class": "ConditionFunction",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Conditions/condition_function.gd"
+}, {
+"base": "Leaf",
+"class": "ConditionLeaf",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/leaves/condition.gd"
+}, {
+"base": "State",
+"class": "Controller",
+"language": "GDScript",
+"path": "res://src/Datablocks/controller.gd"
+}, {
+"base": "BehaviorTreeNode",
+"class": "Decorator",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/decorators/decorator.gd"
 }, {
 "base": "Resource",
 "class": "GameplayEffect",
@@ -69,15 +129,50 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/GameplayEffects/gameplay_effect_spec.gd"
 }, {
+"base": "Decorator",
+"class": "InverterDecorator",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/decorators/inverter.gd"
+}, {
+"base": "BehaviorTreeNode",
+"class": "Leaf",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/leaves/leaf.gd"
+}, {
+"base": "Decorator",
+"class": "LimiterDecorator",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/decorators/limiter.gd"
+}, {
 "base": "Resource",
 "class": "MagnitudeCalculation",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/MagnitudeCalculationTypes/magnitude_calculation.gd"
 }, {
+"base": "Composite",
+"class": "SelectorComposite",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/composites/selector.gd"
+}, {
+"base": "Composite",
+"class": "SequenceComposite",
+"language": "GDScript",
+"path": "res://addons/behavior_tree/nodes/composites/sequence.gd"
+}, {
 "base": "Node",
 "class": "ShellDatablock",
 "language": "GDScript",
 "path": "res://addons/GameplayAttributes/Blueprint/shell_datablock.gd"
+}, {
+"base": "Node",
+"class": "State",
+"language": "GDScript",
+"path": "res://addons/StateMachine/State.gd"
+}, {
+"base": "Node",
+"class": "StateMachine",
+"language": "GDScript",
+"path": "res://addons/StateMachine/StateMachine.gd"
 }, {
 "base": "Reference",
 "class": "TagContainer",
@@ -85,31 +180,98 @@ _global_script_classes=[ {
 "path": "res://addons/GameplayAttributes/Tags/tag_container.gd"
 } ]
 _global_script_class_icons={
+"ActionLeaf": "res://addons/behavior_tree/icons/action.svg",
 "ActorInfo": "",
+"ActorProfile": "",
+"AlwaysFailDecorator": "res://addons/behavior_tree/icons/fail.svg",
+"AlwaysSucceedDecorator": "res://addons/behavior_tree/icons/succeed.svg",
 "Attribute": "",
 "AttributeInjector": "",
 "AttributeSet": "",
 "AttributeSpec": "",
+"Battlefield": "",
+"BehaviorTree": "",
+"BehaviorTreeNode": "res://addons/behavior_tree/icons/action.svg",
+"BehaviorTreeRoot": "res://addons/behavior_tree/icons/tree.svg",
 "Blueprint": "",
+"Composite": "res://addons/behavior_tree/icons/category_composite.svg",
 "Condition": "",
 "ConditionFunction": "",
+"ConditionLeaf": "res://addons/behavior_tree/icons/condition.svg",
+"Controller": "",
+"Decorator": "res://addons/behavior_tree/icons/category_decorator.svg",
 "GameplayEffect": "",
 "GameplayEffectModifier": "",
 "GameplayEffectModifierSpec": "",
 "GameplayEffectSpec": "",
+"InverterDecorator": "res://addons/behavior_tree/icons/inverter.svg",
+"Leaf": "res://addons/behavior_tree/icons/action.svg",
+"LimiterDecorator": "res://addons/behavior_tree/icons/limiter.svg",
 "MagnitudeCalculation": "",
+"SelectorComposite": "res://addons/behavior_tree/icons/selector.svg",
+"SequenceComposite": "res://addons/behavior_tree/icons/sequencer.svg",
 "ShellDatablock": "",
+"State": "",
+"StateMachine": "",
 "TagContainer": ""
 }
 
 [application]
 
-config/name="GameplayAttributes"
+config/name="ProjectLethe"
+run/main_scene="res://src/Levels/test_level01.tscn"
 config/icon="res://icon.png"
+
+[autoload]
+
+Library="*res://src/Autoload/autoload_library.gd"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "GameplayAttributes" )
+enabled=PoolStringArray( "GameplayAttributes", "StateMachine", "behavior_tree" )
+
+[input]
+
+field_move_f={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_b={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_l={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_r={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_u={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":81,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_d={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":69,"unicode":0,"echo":false,"script":null)
+ ]
+}
+field_move_select_pos={
+"deadzone": 0.5,
+"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
+ ]
+}
+
+[layer_names]
+
+3d_physics/layer_1="environment"
+3d_physics/layer_2="actors"
 
 [rendering]
 
