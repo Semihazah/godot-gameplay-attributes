@@ -7,6 +7,7 @@ signal actor_name_changed
 signal actor_portrait_changed
 signal actor_description_changed
 
+onready var stateMachine = $StateMachine
 
 export(String) var actor_name setget _set_actor_name, _get_actor_name
 export(Texture) var actor_portrait setget _set_actor_portrait
@@ -55,11 +56,14 @@ func _set_actor_description(new_description):
 func _spawn_shell() -> Node:
 	if shell and shell.has_method("_disconnect_from_datablock"):
 		shell._disconnect_from_datablock()
-	shell = shell_scene.instance()
+	self.shell = shell_scene.instance()
 	if shell.has_method("_connect_to_datablock"):
 		shell._connect_to_datablock(self)
 	return shell
 
+
+func switch_controller(controller_path:String, msg:= {}):
+	stateMachine.transition_to(controller_path, msg)
 # Data Functions ***************************************************************
 func _save() -> Dictionary:
 	var save_dict = {
