@@ -17,7 +17,7 @@ export(Array, Resource) var actor_factions
 func _connect_to_blueprint(new_blueprint):
 	new_blueprint.name_func = funcref(self, "_get_actor_name")
 	new_blueprint.icon_func = funcref(self, "_get_actor_icon")
-	new_blueprint.faction_func = funcref(self, "_get_faction_list")
+#	new_blueprint.faction_func = funcref(self, "_get_faction_list")
 	new_blueprint.desc_func = funcref(self, "_get_actor_desc")
 	new_blueprint.shell_func = funcref(self, "_get_shell")
 
