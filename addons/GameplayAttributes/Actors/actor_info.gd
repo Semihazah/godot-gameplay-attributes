@@ -72,6 +72,7 @@ func _save() -> Dictionary:
 		"actor_description":self.actor_description,
 		"shell_scene":shell_scene.resource_path,
 		"gender_type":shell_gender,
+		"connections":get_incoming_connections(),
 	}
 	if self.actor_portrait:
 		save_dict["actor_portrait"] = self.actor_portrait.resource_path
@@ -103,5 +104,7 @@ func _load(load_dict:Dictionary) -> bool:
 		var shell = script.new()
 		if shell.has_method("_load"):
 			shell._load(shell_dict)
+	for connect_dict in load_dict["connections"]:
+		get_node(connect_dict["source"]).connect(connect_dict["signal_name"], self, connect_dict["method_name"])
 	return true
 	

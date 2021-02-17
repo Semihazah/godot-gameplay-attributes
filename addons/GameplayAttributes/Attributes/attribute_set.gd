@@ -144,6 +144,14 @@ func find_effect_with_id(id:String) -> GameplayEffectSpec:
 	return null
 
 
+func get_effects_with_tag(tag:String) -> Array:
+	var return_array = []
+	for child in get_children():
+		if child is GameplayEffectSpec:
+			if child.gameplay_effect.effect_tags.has(tag):
+				return_array.append(child)
+	return return_array
+
 func on_modifiers_applied(effect:GameplayEffectSpec, mod_specs:Array):
 #	print("Attribute set: modifiers applied: %s" % [mod_specs])
 	for spec in mod_specs:
@@ -194,6 +202,7 @@ func _set_attribute_injectors(new_array:Array):
 func _save() -> Dictionary:
 	var save_dict = {
 		"script":get_script().resource_path,
+		"connections":get_incoming_connections(),
 		"attributes":{},
 		"children":{},
 	}
@@ -227,4 +236,6 @@ func _load(load_dict:Dictionary) -> bool:
 		elif c is Node:
 			add_child(c)
 			c._load(c_dict)
+	for connect_dict in load_dict["connections"]:
+		get_node(connect_dict["source"]).connect(connect_dict["signal_name"], self, connect_dict["method_name"])
 	return true

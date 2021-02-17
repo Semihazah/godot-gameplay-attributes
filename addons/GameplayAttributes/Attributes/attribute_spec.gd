@@ -244,6 +244,7 @@ func _save() -> Dictionary:
 		"additional_data":_additional_data,
 		"locked":lock_attribute,
 		"base":_base_value,
+		"connections":get_incoming_connections(),
 	}
 	return save_dict
 
@@ -253,4 +254,6 @@ func _load(load_dict:Dictionary) -> bool:
 	_additional_data = load_dict["additional_data"]
 	lock_attribute = load_dict["locked"]
 	_base_value = load_dict["base"]
+	for connect_dict in load_dict["connections"]:
+		parent_attribute_set.get_node(connect_dict["source"]).connect(connect_dict["signal_name"], self, connect_dict["method_name"])
 	return true

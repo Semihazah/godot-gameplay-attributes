@@ -10,6 +10,8 @@ enum Comparator {
 	GREATER_EQUAL = OP_GREATER_EQUAL,
 }
 
+export(bool) var event_run = false
+
 func run_func(_target, _target2, _comparator, _magnitude, _add_data = {}) -> bool:
 	return false
 
@@ -37,4 +39,8 @@ static func compare(value_a, value_b, comparator) -> bool:
 		Comparator.GREATER_EQUAL:
 			if value_a >= value_b:
 				return true
+	return false
+
+
+func connect_spec(cond_spec:ConditionSpec) -> bool:
 	return false

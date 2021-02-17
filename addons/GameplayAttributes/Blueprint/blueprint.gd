@@ -162,10 +162,12 @@ func _save() -> Dictionary:
 		"tags":tagContainer.tags,
 		"blackboard":blackboard,
 		"children":{},
+		"connections":get_incoming_connections(),
 	}
 	for child in get_children():
 		if child.has_method("_save"):
 			save_dict["children"][child.name] = child.save()
+	
 	return save_dict
 
 func _load(load_dict:Dictionary) -> bool:
@@ -183,4 +185,6 @@ func _load(load_dict:Dictionary) -> bool:
 			c._load(c_dict)
 			if c.has_method("connect_to_blueprint"):
 				c.connect_to_blueprint(self)
+	for connect_dict in load_dict["connections"]:
+		get_node(connect_dict["source"]).connect(connect_dict["signal_name"], self, connect_dict["method_name"])
 	return true

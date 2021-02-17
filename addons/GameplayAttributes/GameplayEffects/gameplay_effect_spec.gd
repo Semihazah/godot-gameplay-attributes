@@ -42,6 +42,8 @@ var premature_expiration = true
 
 var tagContainer:TagContainer setget set_tag_container, get_tag_container
 
+var event_condition_list = []
+
 func _init(attr_set):
 	target = attr_set.blueprint
 	if target.get("tagContainer"):
@@ -62,9 +64,6 @@ func _init(attr_set):
 	conditionTimer = Timer.new()
 	conditionTimer.connect("timeout", self, "_on_condition_timeout")
 	add_child(conditionTimer)
-	
-func _ready():
-	set_process(false)
 
 
 func set_effect_info(_source:Node, _effect_resource:GameplayEffect, _source_description = "", _add_data = {}):
@@ -73,6 +72,15 @@ func set_effect_info(_source:Node, _effect_resource:GameplayEffect, _source_desc
 	source = _source
 	additional_data = _add_data
 	effect_source_description = _source_description
+	if not check_application_conditions():
+		queue_free()
+		return
+	for cond in gameplay_effect.condition_ongoing:
+		if cond is Condition:
+			if cond.function.event_run:
+				var cond_spec:= ConditionSpec.new(cond, source, target, additional_data)
+				cond_spec.connect("condition_checked", self, "on_ongoing_condition_checked")
+				event_condition_list.append(cond_spec)
 	activate_effect()
 
 
@@ -81,18 +89,22 @@ func activate_effect():
 	if apply_chance > randf():
 		queue_free()
 		return
-	if not gameplay_effect.condition_application.empty():
-		var requirement_met = true
-		for cond in gameplay_effect.condition_application:
-			if cond is Condition:
-				if not cond.check_condition(source, target, additional_data):
-					requirement_met = false
-					break
-		if not requirement_met:
-			queue_free()
-			return
+
 	if tagContainer and effect_enabled:
 		add_tags()
+	
+	var attr_set = target.get_active_db("AttributeSet")
+	var remove_self = false
+	for tag in gameplay_effect.remove_effects_with_tags:
+		var effect_array = attr_set.get_effects_with_tag(tag)
+		for effect in effect_array:
+			if effect == self:
+				remove_self = true
+				continue
+			effect.queue_free()
+	if remove_self:
+		queue_free()
+		return
 	
 	if gameplay_effect.duration_type == GameplayEffect.DurationType.DURATION || gameplay_effect.duration_type == GameplayEffect.DurationType.INFINITE:
 		if gameplay_effect.period_time > 0:
@@ -120,6 +132,17 @@ func activate_effect():
 	if gameplay_effect.check_conditions_timer > 0:
 		conditionTimer.start(gameplay_effect.check_conditions_timer)
 	emit_signal("effect_start", self)
+
+
+func check_application_conditions() -> bool:
+	if gameplay_effect.condition_application.empty():
+		return true
+	var requirement_met = true
+	for cond in gameplay_effect.condition_application:
+		if cond is Condition:
+			if not cond.check_condition(source, target, additional_data):
+				return false
+	return true
 
 
 func send_modifiers():
@@ -247,8 +270,9 @@ func check_ongoing_conditions() -> bool:
 	var requirements_met = true
 	for cond in gameplay_effect.condition_ongoing:
 		if cond is Condition:
-			if not cond.check_condition(source, target, additional_data):
-				return false
+			if not cond.function.event_run:
+				if not cond.check_condition(source, target, additional_data):
+					return false
 	return true
 
 
@@ -390,7 +414,11 @@ func _save() -> Dictionary:
 		"effect_source_description":effect_source_description,
 		"additional_data":additional_data,
 		"stack_list":stack_list,
+		"event_conditions":[],
+		"connections":get_incoming_connections(),
 	}
+	for cond_spec in event_condition_list:
+		save_dict["event_conditions"].append(cond_spec._save())
 	return save_dict
 
 
@@ -409,5 +437,21 @@ func _load(load_dict:Dictionary) -> bool:
 	stack_list = load_dict["stack_list"]
 	turn_duration_remaining = load_dict["turn_duration_remaining"]
 	
+	for connect_dict in load_dict["connections"]:
+		get_node(connect_dict["source"]).connect(connect_dict["signal_name"], self, connect_dict["method_name"])
+	
+	for cond_spec_dict in load_dict["event_conditions"]:
+		var cond_spec:=ConditionSpec.new(
+				load(cond_spec_dict["condition"]),\
+				get_node(cond_spec_dict["source"]),\
+				get_node(cond_spec_dict["target"]),\
+				cond_spec_dict["additional_data"]
+		)
+		cond_spec.connect("condition_checked", self, "on_ongoing_condition_checked")
+		event_condition_list.append(cond_spec)
 	activate_effect()
 	return true
+
+
+func on_ongoing_condition_checked(condition, response):
+	self.effect_enabled = response

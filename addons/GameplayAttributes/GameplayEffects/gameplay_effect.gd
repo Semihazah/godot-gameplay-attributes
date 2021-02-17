@@ -34,13 +34,15 @@ enum StackExpirationPolicy {
 export(String) var effect_name
 export(String) var effect_ID
 export(Texture) var effect_icon
+export(PoolStringArray) var effect_tags
 export(String, FILE) var spec_scene_override
+
 
 export(PoolStringArray) var tags_granted
 export(PoolStringArray) var remove_effects_with_tags
 
-export(Array, Resource) var condition_application
-export(Array, Resource) var condition_ongoing
+export(Array, Resource) var condition_application setget _set_condition_application
+export(Array, Resource) var condition_ongoing setget _set_condition_ongoing
 
 export(float) var check_conditions_timer = 0.5
 
@@ -146,10 +148,10 @@ func _set_overflow_effects(new_array:Array):
 		var value = new_array[i]
 		if value is GDScript:
 			value = value.new()
-			if value as GameplayEffect:		# Do not remove "as". Prevents editor bug
+			if value.is_class("GameplayEffect"):
 				overflow_effects[i] = value
-		elif not value as GameplayEffect:
-			overflow_effects[i] == null
+		elif not value.is_class("GameplayEffect"):
+			overflow_effects.remove(i)
 			if Engine.editor_hint:
 				print("Expected class: GameplayEffect")
 
@@ -160,10 +162,10 @@ func _set_premature_expiration_effects(new_array:Array):
 		var value = new_array[i]
 		if value is GDScript:
 			value = value.new()
-			if value as GameplayEffect:
+			if value.is_class("GameplayEffect"):
 				expiration_effects_premature[i] = value
-		elif not value as GameplayEffect:
-			expiration_effects_premature[i] == null
+		elif not value.is_class("GameplayEffect"):
+			expiration_effects_premature.remove(i)
 			if Engine.editor_hint:
 				print("Expected class: GameplayEffect")
 
@@ -174,10 +176,10 @@ func _set_routine_expiration_effects(new_array:Array):
 		var value = new_array[i]
 		if value is GDScript:
 			value = value.new()
-			if value as GameplayEffect:
+			if value.is_class("GameplayEffect"):
 				expiration_effects_routine[i] = value
-		elif not value as GameplayEffect:
-			expiration_effects_routine[i] == null
+		elif not value.is_class("GameplayEffect"):
+			expiration_effects_routine.remove(i)
 			if Engine.editor_hint:
 				print("Expected class: GameplayEffect")
 
@@ -191,6 +193,34 @@ func _set_modifiers(new_array:Array):
 			if value is GameplayEffectModifier:
 				modifiers[i] = value
 		elif not value is GameplayEffectModifier:
-			modifiers[i] == null
+			modifiers.remove(i)
 			if Engine.editor_hint:
 				print("Expected class: GameplayEffectModifier")
+
+
+func _set_condition_application(new_array:Array):
+	condition_application = new_array
+	for i in new_array.size():
+		var value = new_array[i]
+		if value is GDScript:
+			value = value.new()
+			if value is Condition:
+				overflow_effects[i] = value
+		elif not value is Condition:
+			overflow_effects.remove(i)
+			if Engine.editor_hint:
+				print("Expected class: Condition")
+
+
+func _set_condition_ongoing(new_array:Array):
+	condition_ongoing = new_array
+	for i in new_array.size():
+		var value = new_array[i]
+		if value is GDScript:
+			value = value.new()
+			if value is Condition:
+				condition_ongoing[i] = value
+		elif not value as Condition:
+			condition_ongoing.remove(i)
+			if Engine.editor_hint:
+				print("Expected class: Condition")

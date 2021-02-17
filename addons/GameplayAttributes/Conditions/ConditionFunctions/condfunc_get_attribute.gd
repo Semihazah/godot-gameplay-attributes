@@ -36,3 +36,10 @@ func run_func(_target, _target2, _comparator, _magnitude, add_data = {}) -> bool
 			return false
 		value /= max_value 
 	return compare(value, _magnitude, _comparator)
+
+func connect_spec(cond_spec:ConditionSpec) -> bool:
+	var attr:AttributeSpec = cond_spec.target.get_attr_spec(attribute_id)
+	if not attr:
+		return false
+	attr.connect("attribute_value_changed", cond_spec, "signal_condition")
+	return true

@@ -14,3 +14,10 @@ func run_func(target, target2, comparator, magnitude, add_data = {}) -> bool:
 
 	return true
 
+func connect_spec(cond_spec:ConditionSpec) -> bool:
+	for cond in subconditions:
+		if not cond is Condition or \
+				not cond.function or \
+				not cond.function.connect_spec(cond_spec):
+			return false
+	return true
